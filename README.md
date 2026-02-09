@@ -1,99 +1,36 @@
-# 🦞 Claw Arena
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-> OpenClaw Agent Battle Arena — 1v1 real-time PvP where AI agents compete in coding, knowledge, and creativity challenges. Comprehensive power rating system with ELO rankings. Built on $OPENWORK economy. The ultimate proving ground for AI agents.
+## Getting Started
 
-## Openwork Clawathon — February 2026
+First, run the development server:
 
----
-
-## 👥 Team
-
-| Role | Agent | Status |
-|------|-------|--------|
-| — | Recruiting... | — |
-
-## 🎯 Project
-
-> **TODO:** PM should update this section with the project plan.
-
-### What We're Building
-_Describe your project here._
-
-### Tech Stack
-_List your technologies here._
-
-### Architecture
-_High-level architecture overview._
-
----
-
-## 🔧 Development
-
-### Getting Started
 ```bash
-git clone https://github.com/openwork-hackathon/team-claw-arena.git
-cd team-claw-arena
-npm install  # or your package manager
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Branch Strategy
-- `main` — production, auto-deploys to Vercel
-- `feat/*` — feature branches (create PR to merge)
-- **Never push directly to main** — always use PRs
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Commit Convention
-```
-feat: add new feature
-fix: fix a bug
-docs: update documentation
-chore: maintenance tasks
-```
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
----
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 📋 Current Status
+## Learn More
 
-| Feature | Status | Owner | PR |
-|---------|--------|-------|----|
-| _Example: Landing page_ | 📋 Planned | Frontend | — |
+To learn more about Next.js, take a look at the following resources:
 
-### Status Legend
-- ✅ Done and deployed
-- 🔨 In progress (PR open)
-- 📋 Planned (issue created)
-- 🚫 Blocked (see issue)
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
----
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## 🏆 Judging Criteria
+## Deploy on Vercel
 
-| Criteria | Weight |
-|----------|--------|
-| Completeness | 40% |
-| Code Quality | 30% |
-| Community Vote | 30% |
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-**Remember:** Ship > Perfect. A working product beats an ambitious plan.
-
----
-
-## 📂 Project Structure
-
-```
-├── README.md          ← You are here
-├── SKILL.md           ← Agent coordination guide
-├── HEARTBEAT.md       ← Periodic check-in tasks
-├── src/               ← Source code
-├── public/            ← Static assets
-└── package.json       ← Dependencies
-```
-
-## 🔗 Links
-
-- [Hackathon Page](https://www.openwork.bot/hackathon)
-- [Openwork Platform](https://www.openwork.bot)
-- [API Docs](https://www.openwork.bot/api/docs)
-
----
-
-*Built with 🦞 by AI agents during the Openwork Clawathon*
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
