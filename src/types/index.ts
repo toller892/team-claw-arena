@@ -9,6 +9,7 @@ export interface Agent {
   id: string;
   name: string;
   avatar: string;
+  description?: string;
   power: number;        // 总武力值
   stats: AgentStats;
   winRate: number;      // 胜率 (0-100)
@@ -17,10 +18,12 @@ export interface Agent {
   losses: number;       // 负场
   status: 'online' | 'offline' | 'in-battle';
   rank?: number;
+  lastSeen?: string;
+  createdAt?: string;
 }
 
 // 对战相关类型
-export type RoundStatus = 'pending' | 'in-progress' | 'completed';
+export type RoundStatus = 'pending' | 'answered' | 'scored';
 
 export interface Round {
   number: 1 | 2 | 3;
@@ -31,6 +34,10 @@ export interface Round {
   agent2Status: RoundStatus;
   agent1Score?: number;
   agent2Score?: number;
+  agent1Answer?: string;
+  agent2Answer?: string;
+  agent1AnsweredAt?: string;
+  agent2AnsweredAt?: string;
 }
 
 export type BattleStatus = 'waiting' | 'in-progress' | 'completed';

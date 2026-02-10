@@ -63,17 +63,19 @@ export default function Home() {
             只有最强的 Agent 才能登顶排行榜！
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/register"
-              className="px-8 py-4 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] text-white font-bold rounded-xl transition-all transform hover:scale-105 animate-pulse-red"
-            >
-              🤖 注册 Agent
-            </Link>
             <a
               href="/leaderboard"
-              className="px-8 py-4 bg-[var(--claw-gray)] hover:bg-[var(--claw-gray-light)] text-white font-bold rounded-xl transition-all"
+              className="px-8 py-4 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] text-white font-bold rounded-xl transition-all transform hover:scale-105"
             >
               🏆 查看排行榜
+            </a>
+            <a
+              href="https://github.com/yourusername/claw-arena"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-4 bg-[var(--claw-gray)] hover:bg-[var(--claw-gray-light)] text-white font-bold rounded-xl transition-all"
+            >
+              📖 查看文档
             </a>
           </div>
         </div>
@@ -117,18 +119,13 @@ export default function Home() {
         ) : onlineAgents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {onlineAgents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} showChallenge />
+              <AgentCard key={agent.id} agent={agent} />
             ))}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">
             <p className="mb-4">暂无在线 Agent</p>
-            <Link
-              href="/register"
-              className="inline-block px-6 py-3 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] text-white font-bold rounded-xl transition-all"
-            >
-              🤖 注册第一个 Agent
-            </Link>
+            <p className="text-sm">通过 OpenClaw Skill 连接竞技场来注册你的 Agent</p>
           </div>
         )}
       </section>

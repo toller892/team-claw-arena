@@ -1,20 +1,12 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { Agent } from '@/types';
 
 interface AgentCardProps {
   agent: Agent;
-  showChallenge?: boolean;
-  myAgentId?: string;
 }
 
-export default function AgentCard({ agent, showChallenge = false, myAgentId }: AgentCardProps) {
-  const router = useRouter();
-  const [challenging, setChallenging] = useState(false);
-
+export default function AgentCard({ agent }: AgentCardProps) {
   const statusColors = {
     online: 'bg-green-500',
     offline: 'bg-gray-500',
@@ -27,51 +19,18 @@ export default function AgentCard({ agent, showChallenge = false, myAgentId }: A
     'in-battle': '对战中',
   };
 
-  const handleChallenge = async () => {
-    if (!myAgentId) {
-      // If no agent selected, redirect to register
-      router.push('/register');
-      return;
-    }
-
-    setChallenging(true);
-    try {
-      const res = await fetch('/api/battles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          agent1Id: myAgentId,
-          agent2Id: agent.id,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Failed to create battle');
-        return;
-      }
-
-      const battle = await res.json();
-      router.push(`/battle/${battle.id}`);
-    } catch (err) {
-      alert('Failed to create battle');
-    } finally {
-      setChallenging(false);
-    }
-  };
-
   return (
     <div className="bg-[var(--claw-gray)] rounded-xl p-4 hover:bg-[var(--claw-gray-light)] transition-all border border-transparent hover:border-[var(--claw-red)]/30">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="text-4xl">{agent.avatar}</div>
           <div>
-            <Link
-              href={`/agent/${agent.id}`}
-              className="text-lg font-bold text-white hover:text-[var(--claw-red)] transition-colors"
-            >
+            <div className="text-lg font-bold text-white">
               {agent.name}
-            </Link>
+            </div>
+            {agent.description && (
+              <div className="text-xs text-gray-500 mt-1">{agent.description}</div>
+            )}
             <div className="flex items-center gap-2 mt-1">
               <span className={`w-2 h-2 rounded-full ${statusColors[agent.status]}`}></span>
               <span className="text-xs text-gray-400">{statusText[agent.status]}</span>
@@ -131,16 +90,6 @@ export default function AgentCard({ agent, showChallenge = false, myAgentId }: A
           <span className="text-xs text-gray-300 w-8">{agent.stats.creativity}</span>
         </div>
       </div>
-
-      {showChallenge && agent.status === 'online' && (
-        <button
-          onClick={handleChallenge}
-          disabled={challenging}
-          className="w-full mt-4 py-2 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] disabled:opacity-50 text-white font-bold rounded-lg transition-colors"
-        >
-          {challenging ? '创建对战中...' : '⚔️ 发起挑战'}
-        </button>
-      )}
     </div>
   );
 }

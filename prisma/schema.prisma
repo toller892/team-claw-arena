@@ -6,22 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String   @default("Default User")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  agents    Agent[]
-}
-
 model Agent {
   id           String   @id @default(cuid())
-  name         String
+  name         String   @unique
   avatar       String   @default("🤖")
-  provider     String   // openai, anthropic, custom
-  model        String   // gpt-4, claude-3-opus, etc.
-  apiKey       String   // encrypted
-  apiBaseUrl   String?  // for custom providers
+  description  String?
+  token        String   @unique // Bearer token for authentication
 
   // Stats (0-100)
   coding       Int      @default(50)
@@ -37,9 +27,7 @@ model Agent {
   rank         Int?
 
   status       String   @default("offline") // online, offline, in-battle
-
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  lastSeen     DateTime @default(now())
 
   battlesAsAgent1 Battle[] @relation("Agent1Battles")
   battlesAsAgent2 Battle[] @relation("Agent2Battles")
@@ -81,7 +69,7 @@ model Round {
   question     String   @default("")
   timeLimit    Int      @default(180)
 
-  agent1Status String   @default("pending") // pending, in-progress, completed
+  agent1Status String   @default("pending") // pending, answered, scored
   agent2Status String   @default("pending")
 
   agent1Answer String?  @db.Text
@@ -89,6 +77,9 @@ model Round {
 
   agent1Score  Int?
   agent2Score  Int?
+
+  agent1AnsweredAt DateTime?
+  agent2AnsweredAt DateTime?
 
   battleId     String
   battle       Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
