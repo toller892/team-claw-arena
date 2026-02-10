@@ -1,9 +1,8 @@
-import { getBattleById, mockBattles } from '@/lib/mock-data';
-import Link from 'next/link';
+'use client';
 
-export function generateStaticParams() {
-  return mockBattles.map((battle) => ({ id: battle.id }));
-}
+import { useEffect, useState, use } from 'react';
+import Link from 'next/link';
+import type { Battle } from '@/types';
 
 function RoundBadge({ category }: { category: string }) {
   const config: Record<string, { emoji: string; label: string; color: string }> = {
@@ -25,11 +24,81 @@ function StatusDot({ status }: { status: string }) {
   return <span className="w-2 h-2 rounded-full bg-gray-500 inline-block" />;
 }
 
-export default async function BattlePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const battle = getBattleById(id);
+export default function BattlePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [battle, setBattle] = useState<Battle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [starting, setStarting] = useState(false);
 
-  if (!battle) {
+  const fetchBattle = async () => {
+    try {
+      const res = await fetch(`/api/battles/${id}`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          setError('Battle not found');
+        } else {
+          setError('Failed to fetch battle');
+        }
+        return;
+      }
+      const data = await res.json();
+      setBattle(data);
+    } catch (err) {
+      setError('Failed to fetch battle');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBattle();
+  }, [id]);
+
+  // Poll every 3 seconds if battle is in progress or waiting
+  useEffect(() => {
+    if (!battle || battle.status === 'completed') return;
+
+    const interval = setInterval(fetchBattle, 3000);
+    return () => clearInterval(interval);
+  }, [battle?.status, id]);
+
+  const handleStartBattle = async () => {
+    if (!battle) return;
+    setStarting(true);
+
+    try {
+      const res = await fetch(`/api/battles/${id}/run`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to start battle');
+        return;
+      }
+
+      // Refresh battle data
+      await fetchBattle();
+    } catch (err) {
+      alert('Failed to start battle');
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-6xl mb-4 animate-bounce">🦞</p>
+          <p className="text-gray-400">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !battle) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -52,6 +121,17 @@ export default async function BattlePage({ params }: { params: Promise<{ id: str
           {status === 'in-progress' ? '对战进行中' : status === 'completed' ? '对战已结束' : '等待开始'}
         </div>
         <h1 className="text-3xl font-bold text-white">⚔️ 1v1 对战</h1>
+
+        {/* Start Battle Button */}
+        {status === 'waiting' && (
+          <button
+            onClick={handleStartBattle}
+            disabled={starting}
+            className="mt-4 px-8 py-3 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] disabled:opacity-50 text-white font-bold rounded-xl transition-all animate-pulse-red"
+          >
+            {starting ? '启动中...' : '🚀 开始对战'}
+          </button>
+        )}
       </div>
 
       {/* Agent Panels */}
@@ -128,7 +208,7 @@ export default async function BattlePage({ params }: { params: Promise<{ id: str
               <div className="text-sm text-gray-400">⏱ {round.timeLimit}s</div>
             </div>
 
-            <p className="text-gray-300 mb-4">{round.question}</p>
+            <p className="text-gray-300 mb-4">{round.question || '等待题目生成...'}</p>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center justify-between bg-[var(--claw-darker)] rounded-lg p-3">
@@ -136,7 +216,7 @@ export default async function BattlePage({ params }: { params: Promise<{ id: str
                   <StatusDot status={round.agent1Status} />
                   <span className="text-sm text-gray-300">{agent1.name}</span>
                 </div>
-                {round.agent1Score !== undefined && (
+                {round.agent1Score !== undefined && round.agent1Score !== null && (
                   <span className="text-lg font-bold text-white">{round.agent1Score}</span>
                 )}
               </div>
@@ -145,7 +225,7 @@ export default async function BattlePage({ params }: { params: Promise<{ id: str
                   <StatusDot status={round.agent2Status} />
                   <span className="text-sm text-gray-300">{agent2.name}</span>
                 </div>
-                {round.agent2Score !== undefined && (
+                {round.agent2Score !== undefined && round.agent2Score !== null && (
                   <span className="text-lg font-bold text-white">{round.agent2Score}</span>
                 )}
               </div>

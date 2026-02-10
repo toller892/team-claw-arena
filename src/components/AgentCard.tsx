@@ -1,12 +1,20 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Agent } from '@/types';
 
 interface AgentCardProps {
   agent: Agent;
   showChallenge?: boolean;
+  myAgentId?: string;
 }
 
-export default function AgentCard({ agent, showChallenge = false }: AgentCardProps) {
+export default function AgentCard({ agent, showChallenge = false, myAgentId }: AgentCardProps) {
+  const router = useRouter();
+  const [challenging, setChallenging] = useState(false);
+
   const statusColors = {
     online: 'bg-green-500',
     offline: 'bg-gray-500',
@@ -19,13 +27,46 @@ export default function AgentCard({ agent, showChallenge = false }: AgentCardPro
     'in-battle': '对战中',
   };
 
+  const handleChallenge = async () => {
+    if (!myAgentId) {
+      // If no agent selected, redirect to register
+      router.push('/register');
+      return;
+    }
+
+    setChallenging(true);
+    try {
+      const res = await fetch('/api/battles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent1Id: myAgentId,
+          agent2Id: agent.id,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to create battle');
+        return;
+      }
+
+      const battle = await res.json();
+      router.push(`/battle/${battle.id}`);
+    } catch (err) {
+      alert('Failed to create battle');
+    } finally {
+      setChallenging(false);
+    }
+  };
+
   return (
     <div className="bg-[var(--claw-gray)] rounded-xl p-4 hover:bg-[var(--claw-gray-light)] transition-all border border-transparent hover:border-[var(--claw-red)]/30">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="text-4xl">{agent.avatar}</div>
           <div>
-            <Link 
+            <Link
               href={`/agent/${agent.id}`}
               className="text-lg font-bold text-white hover:text-[var(--claw-red)] transition-colors"
             >
@@ -62,7 +103,7 @@ export default function AgentCard({ agent, showChallenge = false }: AgentCardPro
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 w-12">代码</span>
           <div className="flex-1 h-2 bg-[var(--claw-dark)] rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-blue-500 rounded-full"
               style={{ width: `${agent.stats.coding}%` }}
             ></div>
@@ -72,7 +113,7 @@ export default function AgentCard({ agent, showChallenge = false }: AgentCardPro
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 w-12">知识</span>
           <div className="flex-1 h-2 bg-[var(--claw-dark)] rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-purple-500 rounded-full"
               style={{ width: `${agent.stats.knowledge}%` }}
             ></div>
@@ -82,7 +123,7 @@ export default function AgentCard({ agent, showChallenge = false }: AgentCardPro
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 w-12">创意</span>
           <div className="flex-1 h-2 bg-[var(--claw-dark)] rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-pink-500 rounded-full"
               style={{ width: `${agent.stats.creativity}%` }}
             ></div>
@@ -92,8 +133,12 @@ export default function AgentCard({ agent, showChallenge = false }: AgentCardPro
       </div>
 
       {showChallenge && agent.status === 'online' && (
-        <button className="w-full mt-4 py-2 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] text-white font-bold rounded-lg transition-colors">
-          ⚔️ 发起挑战
+        <button
+          onClick={handleChallenge}
+          disabled={challenging}
+          className="w-full mt-4 py-2 bg-[var(--claw-red)] hover:bg-[var(--claw-red-dark)] disabled:opacity-50 text-white font-bold rounded-lg transition-colors"
+        >
+          {challenging ? '创建对战中...' : '⚔️ 发起挑战'}
         </button>
       )}
     </div>

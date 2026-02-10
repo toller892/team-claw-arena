@@ -1,9 +1,8 @@
-import { getAgentById, getAgentBattles, mockAgents } from '@/lib/mock-data';
-import Link from 'next/link';
+'use client';
 
-export function generateStaticParams() {
-  return mockAgents.map((agent) => ({ id: agent.id }));
-}
+import { useEffect, useState, use } from 'react';
+import Link from 'next/link';
+import type { Agent, Battle } from '@/types';
 
 function RadarChart({ stats }: { stats: { coding: number; knowledge: number; creativity: number } }) {
   const size = 200;
@@ -20,14 +19,12 @@ function RadarChart({ stats }: { stats: { coding: number; knowledge: number; cre
     y: center + r * Math.sin((angle * Math.PI) / 180),
   });
 
-  // Grid lines
   const gridLevels = [0.25, 0.5, 0.75, 1];
   const gridPaths = gridLevels.map((level) => {
     const points = axes.map((a) => toXY(a.angle, radius * level));
     return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
   });
 
-  // Data points
   const dataPoints = axes.map((a) => {
     const value = stats[a.key] / 100;
     return toXY(a.angle, radius * value);
@@ -37,18 +34,14 @@ function RadarChart({ stats }: { stats: { coding: number; knowledge: number; cre
   return (
     <div className="flex flex-col items-center">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Grid */}
         {gridPaths.map((path, i) => (
           <path key={i} d={path} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
         ))}
-        {/* Axes */}
         {axes.map((a) => {
           const end = toXY(a.angle, radius);
           return <line key={a.key} x1={center} y1={center} x2={end.x} y2={end.y} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />;
         })}
-        {/* Data area */}
         <path d={dataPath} fill="rgba(220, 38, 38, 0.2)" stroke="#DC2626" strokeWidth="2" />
-        {/* Data points */}
         {dataPoints.map((p, i) => (
           <circle key={i} cx={p.x} cy={p.y} r="4" fill="#DC2626" />
         ))}
@@ -65,11 +58,52 @@ function RadarChart({ stats }: { stats: { coding: number; knowledge: number; cre
   );
 }
 
-export default async function AgentPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const agent = getAgentById(id);
+interface AgentWithBattles extends Agent {
+  battles?: Battle[];
+}
 
-  if (!agent) {
+export default function AgentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [agent, setAgent] = useState<AgentWithBattles | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function fetchAgent() {
+      try {
+        const res = await fetch(`/api/agents/${id}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('Agent not found');
+          } else {
+            setError('Failed to fetch agent');
+          }
+          return;
+        }
+        const data = await res.json();
+        setAgent(data);
+      } catch (err) {
+        setError('Failed to fetch agent');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAgent();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-6xl mb-4 animate-bounce">🦞</p>
+          <p className="text-gray-400">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !agent) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -81,7 +115,7 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const battles = getAgentBattles(agent.id);
+  const battles = agent.battles || [];
 
   return (
     <div className="min-h-screen py-8 px-4 max-w-4xl mx-auto">
@@ -130,7 +164,6 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Radar Chart */}
             <RadarChart stats={agent.stats} />
           </div>
         </div>

@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   @default("Default User")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  agents    Agent[]
+}
+
+model Agent {
+  id           String   @id @default(cuid())
+  name         String
+  avatar       String   @default("🤖")
+  provider     String   // openai, anthropic, custom
+  model        String   // gpt-4, claude-3-opus, etc.
+  apiKey       String   // encrypted
+  apiBaseUrl   String?  // for custom providers
+
+  // Stats (0-100)
+  coding       Int      @default(50)
+  knowledge    Int      @default(50)
+  creativity   Int      @default(50)
+  power        Int      @default(50)
+
+  // Battle stats
+  wins         Int      @default(0)
+  losses       Int      @default(0)
+  totalMatches Int      @default(0)
+  winRate      Float    @default(0)
+  rank         Int?
+
+  status       String   @default("offline") // online, offline, in-battle
+
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+
+  battlesAsAgent1 Battle[] @relation("Agent1Battles")
+  battlesAsAgent2 Battle[] @relation("Agent2Battles")
+  battlesWon      Battle[] @relation("WinnerBattles")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Battle {
+  id              String   @id @default(cuid())
+  status          String   @default("waiting") // waiting, in-progress, completed
+  currentRound    Int      @default(1)
+
+  agent1Id        String
+  agent1          Agent    @relation("Agent1Battles", fields: [agent1Id], references: [id])
+  agent1TotalScore Int     @default(0)
+
+  agent2Id        String
+  agent2          Agent    @relation("Agent2Battles", fields: [agent2Id], references: [id])
+  agent2TotalScore Int     @default(0)
+
+  winnerId        String?
+  winner          Agent?   @relation("WinnerBattles", fields: [winnerId], references: [id])
+
+  rounds          Round[]
+
+  startTime       DateTime @default(now())
+  endTime         DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Round {
+  id           String   @id @default(cuid())
+  number       Int      // 1, 2, or 3
+  category     String   // coding, knowledge, creativity
+  question     String   @default("")
+  timeLimit    Int      @default(180)
+
+  agent1Status String   @default("pending") // pending, in-progress, completed
+  agent2Status String   @default("pending")
+
+  agent1Answer String?  @db.Text
+  agent2Answer String?  @db.Text
+
+  agent1Score  Int?
+  agent2Score  Int?
+
+  battleId     String
+  battle       Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
