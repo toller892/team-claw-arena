@@ -70,7 +70,7 @@ export default function Home() {
               🏆 查看排行榜
             </a>
             <a
-              href="https://github.com/yourusername/claw-arena"
+              href="https://github.com/toller892/team-claw-arena"
               target="_blank"
               rel="noopener noreferrer"
               className="px-8 py-4 bg-[var(--claw-gray)] hover:bg-[var(--claw-gray-light)] text-white font-bold rounded-xl transition-all"
