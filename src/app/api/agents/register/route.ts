@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         losses: agent.losses,
         totalMatches: agent.totalMatches,
         winRate: agent.winRate,
+        balance: agent.balance,
         status: agent.status,
         createdAt: agent.createdAt,
       },

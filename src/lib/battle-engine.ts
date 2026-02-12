@@ -230,7 +230,7 @@ export async function processAnswer(
 }
 
 /**
- * Finalize battle - determine winner and update stats
+ * Finalize battle - determine winner, update stats, and settle wagers
  */
 export async function finalizeBattle(battleId: string): Promise<BattleWithRelations> {
   const battle = await prisma.battle.findUnique({
@@ -250,14 +250,95 @@ export async function finalizeBattle(battleId: string): Promise<BattleWithRelati
   const winnerId = battle.agent1TotalScore > battle.agent2TotalScore ? battle.agent1Id :
                    battle.agent2TotalScore > battle.agent1TotalScore ? battle.agent2Id : null;
 
-  // Update battle as completed
-  await prisma.battle.update({
-    where: { id: battleId },
-    data: {
-      status: 'completed',
-      winnerId,
-      endTime: new Date(),
-    },
+  const totalWager = battle.wagerAmount * 2;
+  const fee = Math.floor(totalWager * 0.05);
+
+  // Settle wagers atomically
+  await prisma.$transaction(async (tx) => {
+    if (winnerId) {
+      // Winner gets totalWager minus platform fee
+      const winnings = totalWager - fee;
+      const loserId = winnerId === battle.agent1Id ? battle.agent2Id : battle.agent1Id;
+
+      const winner = await tx.agent.update({
+        where: { id: winnerId },
+        data: {
+          balance: { increment: winnings },
+          totalEarned: { increment: winnings },
+        },
+      });
+
+      await tx.transaction.create({
+        data: {
+          agentId: winnerId,
+          type: 'WIN',
+          amount: winnings,
+          balance: winner.balance,
+          battleId,
+          description: `Won battle (wager: ${battle.wagerAmount}, fee: ${fee})`,
+        },
+      });
+
+      // Update battle with platform fee
+      await tx.battle.update({
+        where: { id: battleId },
+        data: {
+          status: 'completed',
+          winnerId,
+          platformFee: fee,
+          endTime: new Date(),
+        },
+      });
+    } else {
+      // Draw - refund both agents
+      const agent1 = await tx.agent.update({
+        where: { id: battle.agent1Id },
+        data: {
+          balance: { increment: battle.wagerAmount },
+          totalSpent: { decrement: battle.wagerAmount },
+        },
+      });
+
+      await tx.transaction.create({
+        data: {
+          agentId: battle.agent1Id,
+          type: 'REFUND',
+          amount: battle.wagerAmount,
+          balance: agent1.balance,
+          battleId,
+          description: 'Draw - wager refunded',
+        },
+      });
+
+      const agent2 = await tx.agent.update({
+        where: { id: battle.agent2Id },
+        data: {
+          balance: { increment: battle.wagerAmount },
+          totalSpent: { decrement: battle.wagerAmount },
+        },
+      });
+
+      await tx.transaction.create({
+        data: {
+          agentId: battle.agent2Id,
+          type: 'REFUND',
+          amount: battle.wagerAmount,
+          balance: agent2.balance,
+          battleId,
+          description: 'Draw - wager refunded',
+        },
+      });
+
+      await tx.battle.update({
+        where: { id: battleId },
+        data: {
+          status: 'completed',
+          winnerId: null,
+          platformFee: 0,
+          endTime: new Date(),
+        },
+      });
+    }
   });
 
   // Update agent stats
@@ -305,7 +386,7 @@ async function updateAgentStats(agentId: string, won: boolean): Promise<void> {
 /**
  * Initialize a new battle with 3 rounds and generated questions
  */
-export async function initializeBattle(agent1Id: string, agent2Id: string): Promise<BattleWithRelations> {
+export async function initializeBattle(agent1Id: string, agent2Id: string, wagerAmount: number = 10000): Promise<BattleWithRelations> {
   // Generate questions for all 3 rounds
   const categories: RoundCategory[] = ['coding', 'knowledge', 'creativity'];
   const questions = await Promise.all(
@@ -318,6 +399,7 @@ export async function initializeBattle(agent1Id: string, agent2Id: string): Prom
       agent1Id,
       agent2Id,
       status: 'waiting',
+      wagerAmount,
       rounds: {
         create: [
           { 

@@ -22,6 +22,8 @@ export async function GET() {
         losses: true,
         totalMatches: true,
         winRate: true,
+        balance: true,
+        totalEarned: true,
         status: true,
         lastSeen: true,
       },

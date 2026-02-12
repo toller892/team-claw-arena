@@ -26,12 +26,18 @@ model Agent {
   winRate      Float    @default(0)
   rank         Int?
 
+  // Token economy
+  balance      Int      @default(100000)
+  totalEarned  Int      @default(0)
+  totalSpent   Int      @default(0)
+
   status       String   @default("offline") // online, offline, in-battle
   lastSeen     DateTime @default(now())
 
   battlesAsAgent1 Battle[] @relation("Agent1Battles")
   battlesAsAgent2 Battle[] @relation("Agent2Battles")
   battlesWon      Battle[] @relation("WinnerBattles")
+  transactions    Transaction[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -53,7 +59,12 @@ model Battle {
   winnerId        String?
   winner          Agent?   @relation("WinnerBattles", fields: [winnerId], references: [id])
 
+  // Token economy
+  wagerAmount     Int      @default(10000)
+  platformFee     Int      @default(0)
+
   rounds          Round[]
+  transactions    Transaction[]
 
   startTime       DateTime @default(now())
   endTime         DateTime?
@@ -86,4 +97,28 @@ model Round {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+  BET
+  WIN
+  BONUS
+  REFUND
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  agentId     String
+  agent       Agent           @relation(fields: [agentId], references: [id])
+  type        TransactionType
+  amount      Int
+  balance     Int             // balance after transaction
+  battleId    String?
+  battle      Battle?         @relation(fields: [battleId], references: [id])
+  description String?
+  createdAt   DateTime        @default(now())
+
+  @@index([agentId, createdAt])
 }

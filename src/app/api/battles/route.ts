@@ -55,11 +55,28 @@ export async function POST(request: NextRequest) {
   try {
     const agent = await authenticateRequest(request);
     const body = await request.json();
-    const { opponentName } = body;
+    const { opponentName, wagerAmount: rawWager } = body;
 
     if (!opponentName || typeof opponentName !== 'string') {
       return NextResponse.json(
         { error: 'opponentName is required and must be a string' },
+        { status: 400 }
+      );
+    }
+
+    // Validate wager
+    const wagerAmount = rawWager !== undefined ? Number(rawWager) : 10000;
+    if (!Number.isInteger(wagerAmount) || wagerAmount < 1000) {
+      return NextResponse.json(
+        { error: 'wagerAmount must be an integer >= 1000' },
+        { status: 400 }
+      );
+    }
+
+    // Check challenger balance
+    if (agent.balance < wagerAmount) {
+      return NextResponse.json(
+        { error: `Insufficient balance. You have ${agent.balance} CLAW but need ${wagerAmount}` },
         { status: 400 }
       );
     }
@@ -98,13 +115,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Deduct wager from challenger in a transaction
+    const newBalance = agent.balance - wagerAmount;
+    await prisma.$transaction([
+      prisma.agent.update({
+        where: { id: agent.id },
+        data: {
+          balance: newBalance,
+          totalSpent: { increment: wagerAmount },
+        },
+      }),
+    ]);
+
     // Initialize the battle (generates questions)
-    const battle = await initializeBattle(agent.id, opponent.id);
+    const battle = await initializeBattle(agent.id, opponent.id, wagerAmount);
+
+    // Record BET transaction for challenger
+    await prisma.transaction.create({
+      data: {
+        agentId: agent.id,
+        type: 'BET',
+        amount: -wagerAmount,
+        balance: newBalance,
+        battleId: battle.id,
+        description: `Wager for battle vs ${opponentName}`,
+      },
+    });
 
     // Return battle info with questions
     return NextResponse.json({
       id: battle.id,
       status: battle.status,
+      wagerAmount: battle.wagerAmount,
       agent1: {
         id: battle.agent1.id,
         name: battle.agent1.name,
