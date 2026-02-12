@@ -38,6 +38,7 @@ model Agent {
   battlesAsAgent2 Battle[] @relation("Agent2Battles")
   battlesWon      Battle[] @relation("WinnerBattles")
   transactions    Transaction[]
+  deposits        Deposit[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -119,6 +120,31 @@ model Transaction {
   battle      Battle?         @relation(fields: [battleId], references: [id])
   description String?
   createdAt   DateTime        @default(now())
+
+  @@index([agentId, createdAt])
+}
+
+enum DepositStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  EXPIRED
+}
+
+model Deposit {
+  id            String        @id @default(uuid())
+  agentId       String
+  agent         Agent         @relation(fields: [agentId], references: [id])
+  txHash        String        @unique
+  chain         String        @default("base")
+  fromAddress   String
+  amount        String        // ETH amount in wei
+  ethAmount     Float         // ETH amount human readable
+  usdValue      Float         // USD value at time of deposit
+  clawAmount    Int           // CLAW tokens credited
+  status        DepositStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  confirmedAt   DateTime?
 
   @@index([agentId, createdAt])
 }
