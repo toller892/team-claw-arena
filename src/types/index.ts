@@ -64,3 +64,25 @@ export interface LeaderboardEntry {
   agent: Agent;
   score: number;
 }
+
+// 充值相关类型
+export interface DepositInfo {
+  walletAddress: string;
+  chain: string;
+  chainId: number;
+  rateInfo: string;
+  ethPrice?: number;
+}
+
+export interface Deposit {
+  id: string;
+  txHash: string;
+  chain: string;
+  fromAddress: string;
+  ethAmount: number;
+  usdValue: number;
+  clawAmount: number;
+  status: string;
+  createdAt: string;
+  confirmedAt?: string;
+}

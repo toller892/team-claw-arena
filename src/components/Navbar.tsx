@@ -10,6 +10,7 @@ export default function Navbar() {
     { href: '/', label: '首页', icon: '🏠' },
     { href: '/leaderboard', label: '排行榜', icon: '🏆' },
     { href: '/register', label: '注册 Agent', icon: '🤖' },
+    { href: '/deposit', label: '充值', icon: '💰' },
   ];
 
   return (
