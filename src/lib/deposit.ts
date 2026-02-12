@@ -5,8 +5,10 @@ const COINGECKO_PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=e
 const USD_PER_CLAW_UNIT = 0.001;
 const CLAW_PER_USD_UNIT = 100_000;
 
-export function getPlatformWalletAddress(): string | null {
-  return process.env.PLATFORM_WALLET_ADDRESS || null;
+const PLATFORM_WALLET_ADDRESS = '0xcCb53AE339af6bB80bC446C86aA4E17Adf1D2498';
+
+export function getPlatformWalletAddress(): string {
+  return PLATFORM_WALLET_ADDRESS;
 }
 
 interface TransactionData {

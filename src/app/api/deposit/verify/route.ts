@@ -11,12 +11,6 @@ import {
 
 export async function POST(request: NextRequest) {
   const platformWallet = getPlatformWalletAddress();
-  if (!platformWallet) {
-    return NextResponse.json(
-      { error: 'Deposit not configured' },
-      { status: 501 }
-    );
-  }
 
   let agent;
   try {
@@ -85,7 +79,7 @@ export async function POST(request: NextRequest) {
           txHash: normalizedHash,
           chain: 'base',
           fromAddress: txData.fromAddress,
-          amount: txData.weiAmount,
+          amountWei: txData.weiAmount,
           ethAmount: txData.ethAmount,
           usdValue,
           clawAmount,
@@ -98,7 +92,6 @@ export async function POST(request: NextRequest) {
         where: { id: agent.id },
         data: {
           balance: { increment: clawAmount },
-          totalEarned: { increment: clawAmount },
         },
       });
 
@@ -108,7 +101,7 @@ export async function POST(request: NextRequest) {
           type: 'DEPOSIT',
           amount: clawAmount,
           balance: updatedAgent.balance,
-          description: `ETH deposit: ${txData.ethAmount.toFixed(6)} ETH ($${usdValue.toFixed(2)})`,
+          description: `Base ETH deposit: ${normalizedHash}`,
         },
       });
 

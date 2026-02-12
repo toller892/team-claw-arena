@@ -138,7 +138,7 @@ model Deposit {
   txHash        String        @unique
   chain         String        @default("base")
   fromAddress   String
-  amount        String        // ETH amount in wei
+  amountWei     String        // ETH amount in wei
   ethAmount     Float         // ETH amount human readable
   usdValue      Float         // USD value at time of deposit
   clawAmount    Int           // CLAW tokens credited
