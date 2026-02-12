@@ -108,7 +108,16 @@ export async function POST(request: NextRequest) {
       return { deposit, newBalance: updatedAgent.balance };
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      success: true,
+      deposit: {
+        txHash: normalizedHash,
+        ethAmount: txData.ethAmount,
+        usdValue,
+        clawAmount,
+        newBalance: result.newBalance,
+      },
+    });
   } catch (error) {
     if (error instanceof DepositError) {
       return NextResponse.json(
